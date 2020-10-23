@@ -66,7 +66,7 @@ If you will see a message similiar to message under you don't have to care, just
 #### HOW TO
 
     git clone https://github.com/benyaminxploit1/CPA
-    cd CPA; ./CPA --help
+    cd CPA; ./cpa --help
 
 #### REQUIREMENTS
 
